@@ -33,7 +33,6 @@ namespace OSPF.TrainDistances.Models
             do
             {
                 x++;
-                //foreach (var stationDistance in StationsDistance)
                 for (int stationDistanceCount = 0; stationDistanceCount < StationsDistance.Count; stationDistanceCount++)
                 {
                     var stationCode = StationsDistance.ElementAt(stationDistanceCount).Key.ToCharArray();
@@ -58,20 +57,12 @@ namespace OSPF.TrainDistances.Models
                         mapping.Add(StationsDistance.ElementAt(stationDistanceCount).Key, distance);
                         break;
                     }
-                    /*else if (startPoint && mapping.Any() && stationCode[0] == mapping.Last().Key.ToCharArray()[1])*/
                     else if (startPoint && mapping.Any() && stationCode[0] == mapping.Last().Key.ToCharArray()[1] && 
                         !mapping.ContainsKey(StationsDistance.ElementAt(stationDistanceCount).Key))
                     {
                         mapping.Add(StationsDistance.ElementAt(stationDistanceCount).Key, distance);
                         stationDistanceCount = -1;
                     }
-                    
-                    
-                    /*else if (startPoint && StationMapping.Any() && stationCode[1] == StationMapping.Values.Last().Keys.Last().ToCharArray()[1])
-                    {
-                        mapping.Add(stationDistance.Key, distance);
-                    }*/
-                    
                 }
                 if (startPoint && mapping.Any() && mapping.Last().Key.ToCharArray()[1] == Routes[1])
                 {

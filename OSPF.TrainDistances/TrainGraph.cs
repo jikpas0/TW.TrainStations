@@ -12,12 +12,16 @@ namespace OSPF.TrainDistances
         public static void Main(string[] args)
         {
             PromptOperator promptOperator = new PromptOperator();
-
-            promptOperator.GreetingPrompt();
-            promptOperator.SelectRouteType();
-            promptOperator.StationRoute();
-            promptOperator.Calculate();
-            Console.ReadLine();
+            string isExit = string.Empty;
+            while (isExit.ToLower() != "exit")
+            {
+                promptOperator.GreetingPrompt();
+                promptOperator.SelectRouteType();
+                promptOperator.StationRoute();
+                promptOperator.Calculate();
+                Console.WriteLine("To quit enter [Exit, exit], any other entry will restart the train time check");
+                isExit = Console.ReadLine();
+            }
         }
     }
 }
