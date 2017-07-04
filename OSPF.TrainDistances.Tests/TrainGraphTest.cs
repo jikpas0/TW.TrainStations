@@ -35,6 +35,40 @@ namespace OSPF.TrainDistances.Tests
             Assert.IsNotNull(calulcatedDistance);
         }
 
+        [Test]
+        public void ShouldReturnAllPossibleRoutes()
+        {
+            //Setup
+            TrainDistanceProcessor trainDistances = new TrainDistanceProcessor();
+            Dictionary<int, Dictionary<string, int>> stationsStub = new Dictionary<int,Dictionary<string,int>>
+            {
+                { 0, new Dictionary<string, int>
+                    {
+                        {"AB", 15},
+                        {"BC", 13}
+                    }
+                },
+                { 1, new Dictionary<string, int>
+                    {
+                        {"CD", 9},
+                        {"DE", 15}
+                    }
+                },
+                { 2, new Dictionary<string, int>
+                    {
+                        {"EA", 8},
+                        {"AC", 3}
+                    }
+                }
+            };
+
+            //Act
+            Dictionary<int, Dictionary<string, int>> calulcatedDistance = trainDistances.MergeAdditionalRoutes(stationsStub);
+
+            //Assert
+            Assert.IsNotNull(calulcatedDistance);
+        }
+
         //AB5, BC4, CD8, DC8, DE6, AD5, CE2, EB3, AE7
         [TestCase(new[] { 'A', 'B', 'C', 'D', 'E' }, 23)]
         [TestCase(new[] { 'A', 'B', 'C' }, 9)]

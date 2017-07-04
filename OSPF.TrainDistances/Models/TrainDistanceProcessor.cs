@@ -38,22 +38,48 @@ namespace OSPF.TrainDistances.Models
                     var stationCode = StationsDistance.ElementAt(stationDistanceCount).Key.ToCharArray();
                     
                     if (!startPoint && stationCode[0] == Routes[0]) {
-                        if (StationMapping.Any() &&
+                        /*if (StationMapping.Any() &&
                             StationMapping.Last().Value.Keys.First() == StationsDistance.ElementAt(stationDistanceCount).Key)
                         {
                             continue;
-                        } 
+                        } */
                         if (!StationMapping.Any() || StationMapping.Any() &&
                             StationMapping.Last().Value.Keys.First() != StationsDistance.ElementAt(stationDistanceCount).Key)
-                        {
+                        { 
                             startPoint = true;
                             distance = distance + StationsDistance.ElementAt(stationDistanceCount).Value;
                             mapping.Add(StationsDistance.ElementAt(stationDistanceCount).Key, distance);
                             stationDistanceCount = -1;
+                             
                         }
                     }
                     else if (startPoint && mapping.Any() && stationCode[0] == mapping.Last().Key.ToCharArray()[1] && stationCode[1] == Routes[1])
                     {
+                        int test7 = -1;
+                        foreach (var stationMap in StationMapping.Values)
+                        {
+                            List<String> test5 = stationMap.Select(i => i.Key)
+                            .ToList();
+                            test7 = test5.IndexOf(StationsDistance.ElementAt(stationDistanceCount).Key);
+
+                        }
+
+                        var test6 = mapping.Values.ToList();
+
+                        if (test7 != -1 &&
+                            mapping.ElementAtOrDefault(test7).Key !=
+                            StationsDistance.ElementAt(stationDistanceCount).Key)
+                        {
+                            mapping.Add(StationsDistance.ElementAt(stationDistanceCount).Key, distance);
+                            break;
+                        }
+                        if ( //found &&
+                            StationMapping.Values.Any(
+                                y => y.ContainsKey(StationsDistance.ElementAt(stationDistanceCount).Key)) 
+                                    )
+                        {
+                            continue;
+                        }
                         mapping.Add(StationsDistance.ElementAt(stationDistanceCount).Key, distance);
                         break;
                     }
@@ -62,18 +88,57 @@ namespace OSPF.TrainDistances.Models
                     {
                         mapping.Add(StationsDistance.ElementAt(stationDistanceCount).Key, distance);
                         stationDistanceCount = -1;
+                    } else if (stationDistanceCount == 8)
+                    {
+                        stationDistanceCount = -1;
                     }
                 }
                 if (startPoint && mapping.Any() && mapping.Last().Key.ToCharArray()[1] == Routes[1])
                 {
                     StationMapping.Add(x, mapping);
                     mapping = new Dictionary<string, int>();
+                    
                 }
                 startPoint = false;
 
-            } while ( x < 2);
 
+            } while ( x < StationsDistance.Count);
+            
+            StationMapping = MergeAdditionalRoutes(StationMapping);
             return StationMapping;
+        }
+
+        public Dictionary<int, Dictionary<string, int>> MergeAdditionalRoutes(Dictionary<int, Dictionary<string, int>> stationMapping)
+        {
+            string stationRoute = string.Empty;
+            int distance = 0;
+            int count = 0;
+            bool found = false;
+            
+            foreach (var stationMap in stationMapping.Values)
+            {
+                for (int i = 0; i < stationMap.Count; i++)
+                {
+                    if ((distance + stationMap.ElementAt(i).Value) <= 30)
+                    {
+                        found = true;
+                        stationRoute = stationRoute + stationMap.ElementAt(i).Key;
+                        distance += stationMap.ElementAt(i).Value;
+                    }
+                }
+                    
+            }
+            stationMapping.Add(stationMapping.Count, new Dictionary<string, int>
+            {
+                { stationRoute, distance }
+            });
+
+            if (found == false)
+            {
+                stationMapping = MergeAdditionalRoutes(StationMapping);
+            }
+
+            return stationMapping;
         }
 
         public int CalculateStationByStation(List<char> Routes)

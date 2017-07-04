@@ -45,6 +45,7 @@
   <ItemGroup>
     <Compile Include="Models\PromptOperator.cs" />
     <Compile Include="Models\TrainDistanceProcessor.cs" />
+    <Compile Include="Models\TrainStations.cs" />
     <Compile Include="TrainGraph.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
