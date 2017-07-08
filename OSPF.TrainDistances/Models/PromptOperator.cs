@@ -68,7 +68,7 @@ namespace OSPF.TrainDistances.Models
 
         public string CalculateEndToEnd(List<char> Route)
         {
-            Dictionary<int, Dictionary<string, int>> calculatedJourney = _trainDistanceOperator.CalculateEndToEnd(Route);
+            Dictionary<int, List<TrainStations>> calculatedJourney = _trainDistanceOperator.CalculateEndToEnd(Route);
             string journeyDistance = string.Empty;
             if (!calculatedJourney.Any())
             {
@@ -77,9 +77,9 @@ namespace OSPF.TrainDistances.Models
 
             foreach (var journey in calculatedJourney)
             {
-                if (string.IsNullOrEmpty(journeyDistance) || int.Parse(journeyDistance) > journey.Value.Values.Sum())
+                if (string.IsNullOrEmpty(journeyDistance) || int.Parse(journeyDistance) > journey.Value.Sum(j => j.Distance))
                 {
-                    journeyDistance = journey.Value.Values.Sum().ToString();
+                    journeyDistance = journey.Value.Sum(j => j.Distance).ToString();
                 }
             }
             

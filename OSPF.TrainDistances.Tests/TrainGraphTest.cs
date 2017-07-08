@@ -29,7 +29,7 @@ namespace OSPF.TrainDistances.Tests
             List<char> stationsStub = new List<char> {'C', 'C'};
 
             //Act
-            Dictionary<int, Dictionary<string, int>> calulcatedDistance = trainDistances.CalculateEndToEnd(stationsStub);
+            Dictionary<int, List<TrainStations>> calulcatedDistance = trainDistances.CalculateEndToEnd(stationsStub);
             
             //Assert
             Assert.IsNotNull(calulcatedDistance);
@@ -40,30 +40,48 @@ namespace OSPF.TrainDistances.Tests
         {
             //Setup
             TrainDistanceProcessor trainDistances = new TrainDistanceProcessor();
-            Dictionary<int, Dictionary<string, int>> stationsStub = new Dictionary<int,Dictionary<string,int>>
+            Dictionary<int, List<TrainStations>> stationsStub = new Dictionary<int, List<TrainStations>>
             {
-                { 0, new Dictionary<string, int>
+                { 0, new List<TrainStations> 
                     {
-                        {"AB", 15},
-                        {"BC", 13}
+                        new TrainStations {
+                            Station = "AB",
+                            Distance = 15,
+                        },
+                        new TrainStations { 
+                            Station = "BC",
+                            Distance = 13
+                        }
                     }
                 },
-                { 1, new Dictionary<string, int>
+                { 1, new List<TrainStations> 
                     {
-                        {"CD", 9},
-                        {"DE", 15}
+                        new TrainStations {
+                            Station = "CD",
+                            Distance = 9,
+                        },
+                        new TrainStations { 
+                            Station = "DE",
+                            Distance = 15
+                        }
                     }
                 },
-                { 2, new Dictionary<string, int>
+                { 2, new List<TrainStations> 
                     {
-                        {"EA", 8},
-                        {"AC", 3}
+                        new TrainStations {
+                            Station = "EA",
+                            Distance = 9,
+                        },
+                        new TrainStations { 
+                            Station = "AC",
+                            Distance = 5
+                        }
                     }
                 }
             };
 
             //Act
-            Dictionary<int, Dictionary<string, int>> calulcatedDistance = trainDistances.MergeAdditionalRoutes(stationsStub);
+            Dictionary<int, List<TrainStations>> calulcatedDistance = trainDistances.MergeAdditionalRoutes(stationsStub);
 
             //Assert
             Assert.IsNotNull(calulcatedDistance);

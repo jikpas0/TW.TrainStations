@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -9,134 +10,378 @@ namespace OSPF.TrainDistances.Models
     public class TrainDistanceProcessor
     {
         //AB5, BC4, CD8, DC8, DE6, AD5, CE2, EB3, AE7
-        public Dictionary<string, int> StationsDistance = new Dictionary<string, int>
+        public List<TrainStations> StationsDistance = new List<TrainStations>()
         {
-            { "AB", 5 },
-            { "BC", 4 },
-            { "CD", 8 },
-            { "DC", 8 },
-            { "DE", 6 },
-            { "AD", 5 },
-            { "CE", 2 },
-            { "EB", 3 },
-            { "AE", 7 }
+            new TrainStations { Station = "AB", Distance = 5 },
+            new TrainStations { Station = "BC", Distance = 4 },
+            new TrainStations { Station = "CD", Distance = 8 },
+            new TrainStations { Station = "DC", Distance = 8 },
+            new TrainStations { Station = "DE", Distance = 6 },
+            new TrainStations { Station = "AD", Distance = 5 },
+            new TrainStations { Station = "CE", Distance = 2 },
+            new TrainStations { Station = "EB", Distance = 3 },
+            new TrainStations { Station = "AE", Distance = 7 }
         };
 
-        public Dictionary<int, Dictionary<string, int>> StationMapping = new Dictionary<int, Dictionary<string, int>>();  
+        //public Dictionary<int, Dictionary<string, int>> StationMapping = new Dictionary<int, Dictionary<string, int>>();
+        public Dictionary<int, List<TrainStations>> StationMapping = new Dictionary<int, List<TrainStations>>();  
 
-        public Dictionary<int, Dictionary<string, int>> CalculateEndToEnd(List<char> Routes)
+        public Dictionary<int, List<TrainStations>> CalculateEndToEnd(List<char> Routes)
         {
             int distance = 0;
             int x = 0;
             bool startPoint = false;
-            Dictionary<string, int> mapping = new Dictionary<string, int>();
+            List<TrainStations> mappings = new List<TrainStations>();
             do
             {
                 x++;
                 for (int stationDistanceCount = 0; stationDistanceCount < StationsDistance.Count; stationDistanceCount++)
                 {
-                    var stationCode = StationsDistance.ElementAt(stationDistanceCount).Key.ToCharArray();
+                    var stationCode = StationsDistance[stationDistanceCount].Station.ToCharArray();
                     
                     if (!startPoint && stationCode[0] == Routes[0]) {
-                        /*if (StationMapping.Any() &&
-                            StationMapping.Last().Value.Keys.First() == StationsDistance.ElementAt(stationDistanceCount).Key)
-                        {
-                            continue;
-                        } */
                         if (!StationMapping.Any() || StationMapping.Any() &&
-                            StationMapping.Last().Value.Keys.First() != StationsDistance.ElementAt(stationDistanceCount).Key)
-                        { 
+                            StationMapping.Last().Value.First().Station != StationsDistance[stationDistanceCount].Station)
+                        {
                             startPoint = true;
-                            distance = distance + StationsDistance.ElementAt(stationDistanceCount).Value;
-                            mapping.Add(StationsDistance.ElementAt(stationDistanceCount).Key, distance);
+                           // distance = distance + StationsDistance[stationDistanceCount].Distance;
+                            mappings.Add(new TrainStations
+                            {
+                                Station = StationsDistance[stationDistanceCount].Station,
+                                Distance = StationsDistance[stationDistanceCount].Distance
+                            }
+                        );
                             stationDistanceCount = -1;
                              
                         }
                     }
-                    else if (startPoint && mapping.Any() && stationCode[0] == mapping.Last().Key.ToCharArray()[1] && stationCode[1] == Routes[1])
+                    else if (startPoint && mappings.Any() && stationCode[0] == mappings.Last().Station.ToCharArray()[1] && stationCode[1] == Routes[1])
                     {
                         int test7 = -1;
                         foreach (var stationMap in StationMapping.Values)
                         {
-                            List<String> test5 = stationMap.Select(i => i.Key)
+                            List<String> test5 = stationMap.Select(i => i.Station)
                             .ToList();
-                            test7 = test5.IndexOf(StationsDistance.ElementAt(stationDistanceCount).Key);
+                            test7 = test5.IndexOf(StationsDistance[stationDistanceCount].Station);
 
                         }
 
-                        var test6 = mapping.Values.ToList();
-
-                        if (test7 != -1 &&
-                            mapping.ElementAtOrDefault(test7).Key !=
-                            StationsDistance.ElementAt(stationDistanceCount).Key)
+                        if (test7 != -1 
+                            /*mappings[test7].Station !=
+                            StationsDistance[stationDistanceCount].Station*/)
                         {
-                            mapping.Add(StationsDistance.ElementAt(stationDistanceCount).Key, distance);
+                            mappings.Add(new TrainStations
+                            {
+                                Station = StationsDistance[stationDistanceCount].Station,
+                                Distance = StationsDistance[stationDistanceCount].Distance
+
+                            });
                             break;
                         }
                         if ( //found &&
                             StationMapping.Values.Any(
-                                y => y.ContainsKey(StationsDistance.ElementAt(stationDistanceCount).Key)) 
+                                y => y.Any(o => o.Station == StationsDistance[stationDistanceCount].Station)) 
                                     )
                         {
                             continue;
                         }
-                        mapping.Add(StationsDistance.ElementAt(stationDistanceCount).Key, distance);
+                        mappings.Add(new TrainStations
+                        {
+                            Station = StationsDistance[stationDistanceCount].Station,
+                            Distance = StationsDistance[stationDistanceCount].Distance
+
+                        });
                         break;
                     }
-                    else if (startPoint && mapping.Any() && stationCode[0] == mapping.Last().Key.ToCharArray()[1] && 
-                        !mapping.ContainsKey(StationsDistance.ElementAt(stationDistanceCount).Key))
+                    else if (startPoint && mappings.Any() && stationCode[0] == mappings.Last().Station.ToCharArray()[1] && 
+                        mappings.All(q => q.Station != StationsDistance[stationDistanceCount].Station))
                     {
-                        mapping.Add(StationsDistance.ElementAt(stationDistanceCount).Key, distance);
+                        mappings.Add(new TrainStations
+                        {
+                            Station = StationsDistance[stationDistanceCount].Station,
+                            Distance = StationsDistance[stationDistanceCount].Distance
+                        });
                         stationDistanceCount = -1;
-                    } else if (stationDistanceCount == 8)
-                    {
-                        stationDistanceCount = -1;
-                    }
+                    } 
                 }
-                if (startPoint && mapping.Any() && mapping.Last().Key.ToCharArray()[1] == Routes[1])
+                if (startPoint && mappings.Any() && mappings.Last().Station.ToCharArray()[1] == Routes[1])
                 {
-                    StationMapping.Add(x, mapping);
-                    mapping = new Dictionary<string, int>();
-                    
+                    if (!StationMapping.Any() || !CheckDistinct(StationMapping.Values.SelectMany(train => train).ToList(), mappings))
+                    {
+                        StationMapping.Add(x, mappings);
+                        mappings = new List<TrainStations>();
+                    }
                 }
                 startPoint = false;
 
 
             } while ( x < StationsDistance.Count);
+            //TrainStationsDetails details = new TrainStationsDetails(stationMapping.Values.ElementAt(stat));
             
             StationMapping = MergeAdditionalRoutes(StationMapping);
             return StationMapping;
         }
 
-        public Dictionary<int, Dictionary<string, int>> MergeAdditionalRoutes(Dictionary<int, Dictionary<string, int>> stationMapping)
+        private bool CheckDistinct(List<TrainStations> stationMappings, List<TrainStations> mappings, bool isSingle = false)
         {
-            string stationRoute = string.Empty;
-            int distance = 0;
-            int count = 0;
-            bool found = false;
-            
-            foreach (var stationMap in stationMapping.Values)
+            foreach (var stationMapping in stationMappings)
             {
-                for (int i = 0; i < stationMap.Count; i++)
+                if (stationMappings.Count == mappings.Count)
                 {
-                    if ((distance + stationMap.ElementAt(i).Value) <= 30)
+                    for (int map = 0; map < mappings.Count; map++)
                     {
-                        found = true;
-                        stationRoute = stationRoute + stationMap.ElementAt(i).Key;
-                        distance += stationMap.ElementAt(i).Value;
+                        if (stationMappings[map].Distance == mappings[map].Distance &&
+                            stationMappings[map].Station == mappings[map].Station)
+                        {
+                            return true;
+                        }
                     }
                 }
-                    
-            }
-            stationMapping.Add(stationMapping.Count, new Dictionary<string, int>
-            {
-                { stationRoute, distance }
-            });
 
-            if (found == false)
-            {
-                stationMapping = MergeAdditionalRoutes(StationMapping);
+                if (isSingle && stationMappings.Any(sm => sm.Distance == mappings.First().Distance 
+                    && sm.Station == mappings.First().Station))
+                {
+                    return true;
+                }
             }
+
+            return false;
+        }
+
+        private bool CheckDistinctOnSingle(List<TrainStations> stationMappings, List<TrainStations> mappings)
+        {
+            return CheckDistinct(stationMappings, mappings, true);
+        }
+
+        private Dictionary<int, List<TrainStations>> AggregateStationsToRoute()
+        {
+            var stationMapping = new Dictionary<int, List<TrainStations>>();
+
+            int count = 0;
+            stationMapping.Add(count, new List<TrainStations>
+            {
+
+            });
+            foreach (var stat in StationMapping.Values)
+            {
+                TrainStationsDetails details = new TrainStationsDetails(stat);
+                List<TrainStations> temp = new List<TrainStations>
+                {
+                    new TrainStations {
+                        Station = details.Route,
+                        Distance = details.RouteDistance
+                    }
+                };
+
+                if (!CheckDistinctOnSingle(stationMapping.Values.SelectMany(t => t).ToList(), temp))
+                {
+                    stationMapping.Values.First().Add(temp.First());
+                }
+            }
+
+            return stationMapping;
+        }
+
+        //refactor into smaller methods 
+        public Dictionary<int, List<TrainStations>> MergeAdditionalRoutes(Dictionary<int, List<TrainStations>> stationMapping)
+        {
+            string stationRoute = string.Empty;
+            string invertStationRoute = string.Empty;
+            int distance = 0;
+            int count = 0;
+            List<TrainStations> trains = new List<TrainStations>();
+            bool started = false;
+            bool completed = false;
+            List<TrainStations> groupedStations = new List<TrainStations>();
+
+            
+            //foreach (var stationMap in stationMapping.Values)
+            for (int stat = 0; stat < stationMapping.Values.Count; stat++)
+            {
+                
+                TrainStationsDetails details = new TrainStationsDetails(stationMapping.Values.ElementAt(stat));
+                if (distance == 0 && started == false)
+                {
+                    started = true;
+                    stationRoute = details.Route;
+                    distance = details.RouteDistance;
+                    stat = -1;
+                    continue;
+                }
+                if (details.RouteDistance <= 10)
+                {
+                    
+                    stationRoute = details.Route + details.Route + details.Route;
+                    distance = details.RouteDistance + details.RouteDistance + details.RouteDistance;
+
+                    trains = new List<TrainStations>
+                    {
+                        new TrainStations { 
+                            Station = stationRoute,
+                            Distance = distance
+                        }
+                    };
+                    if (!CheckDistinctOnSingle(groupedStations, trains))
+                    {
+                        groupedStations.Add(new TrainStations
+                        {
+                            Station = stationRoute,
+                            Distance = distance
+                        });
+                    }
+
+                    stationRoute = string.Empty;
+                    distance = 0;
+                    trains = new List<TrainStations>();
+                }
+
+                if (details.RouteDistance <= 15 && started)
+                {
+                    
+                    stationRoute = details.Route + details.Route;
+                    distance = details.RouteDistance + details.RouteDistance;
+                    trains = new List<TrainStations>
+                    {
+                        new TrainStations {
+                            Station = stationRoute,
+                            Distance = distance
+                        }
+                    };
+                    if (!CheckDistinctOnSingle(groupedStations, trains))
+                    {
+                        groupedStations.Add(new TrainStations
+                        {
+                            Station = stationRoute,
+                            Distance = distance
+                        });
+                    }
+                    stationRoute = string.Empty;
+                    distance = 0;
+                    trains = new List<TrainStations>();
+                }
+
+                if ((distance + details.RouteDistance) <= 30)
+                {
+
+                    var temp = stationRoute;
+                    stationRoute = details.Route + temp;
+                    invertStationRoute = temp + details.Route;
+                    distance = details.RouteDistance + distance;
+                    if (!trains.Any())
+                    {
+                        trains = new List<TrainStations>
+                        {
+                            new TrainStations
+                            {
+                                Station = stationRoute,
+                                Distance = distance,
+                                Merged = false
+                            }
+                        };
+                    }
+                    else
+                    {
+                        stationRoute = trains.First().Station + details.Route;
+                        invertStationRoute = details.Route + trains.First().Station;
+                        distance = trains.First().Distance + details.RouteDistance;
+                        trains.First().Merged = true;
+                    }
+
+
+                    if (trains.First().Merged && !CheckDistinctOnSingle(groupedStations, trains)
+                        && distance < 30)
+                    {
+                        groupedStations.Add(new TrainStations
+                        {
+                            Station = stationRoute,
+                            Distance = distance
+                        });
+
+                        groupedStations.Add(new TrainStations
+                        {
+                            Station = invertStationRoute,
+                            Distance = distance
+                        });
+                        trains = new List<TrainStations>();
+                        if (completed)
+                        {
+                            break;
+                        }
+                        if (stat++ == stationMapping.Values.Count)
+                        {
+                            stat = -1;
+                            completed = true;
+                        }
+                    }
+
+
+                    stationRoute = string.Empty;
+                    distance = 0;
+                    invertStationRoute = string.Empty;
+                }
+                else
+                {
+                    for (int statMap = 0; statMap < stationMapping.Values.Count; statMap++)
+                    {
+                        TrainStationsDetails detailsMap = new TrainStationsDetails(stationMapping.Values.ElementAt(statMap));
+                        if ((details.RouteDistance + detailsMap.RouteDistance) <= 30)
+                        {
+                            var temp = stationRoute;
+                            stationRoute = detailsMap.Route + details.Route;
+                            invertStationRoute = details.Route + detailsMap.Route;
+                            distance = detailsMap.RouteDistance + details.RouteDistance;
+                            if (!trains.Any())
+                            {
+                                trains = new List<TrainStations>
+                                {
+                                    new TrainStations
+                                    {
+                                        Station = stationRoute,
+                                        Distance = distance,
+                                        Merged = true
+                                    }
+                                };
+                            }
+                            
+
+                            if (trains.First().Merged && !CheckDistinctOnSingle(groupedStations, trains)
+                                && distance < 30)
+                            {
+                                groupedStations.Add(new TrainStations
+                                {
+                                    Station = stationRoute,
+                                    Distance = distance
+                                });
+                                groupedStations.Add(new TrainStations
+                                {
+                                    Station = invertStationRoute,
+                                    Distance = distance
+                                });
+
+                                stationRoute = string.Empty;
+                                distance = 0;
+                                invertStationRoute = string.Empty;
+
+                                trains = new List<TrainStations>();
+                                if (completed)
+                                {
+                                    break;
+                                }
+                                if (stat++ == stationMapping.Values.Count)
+                                {
+                                    stat = -1;
+                                    completed = true;
+                                }
+                            }
+                        }
+
+                       
+                    }
+                }
+            }
+
+            stationMapping = AggregateStationsToRoute();
+            stationMapping.Add(stationMapping.Count + 1, groupedStations);
 
             return stationMapping;
         }
@@ -150,11 +395,11 @@ namespace OSPF.TrainDistances.Models
             {
                 foreach (var stationDistance in StationsDistance)
                 {
-                    var stationCode = stationDistance.Key.ToCharArray();
+                    var stationCode = stationDistance.Station.ToCharArray();
                     if (stationCode[0] == Routes[userEntry] && stationCode[1] == Routes[userEntry + 1])
                     {
                         routeFound = true;
-                        distance = distance + stationDistance.Value;
+                        distance = distance + stationDistance.Distance;
                     }
                 }
 
