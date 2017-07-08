@@ -22,53 +22,51 @@ namespace OSPF.TrainDistances.Models
             new TrainStations { Station = "EB", Distance = 3 },
             new TrainStations { Station = "AE", Distance = 7 }
         };
+        
+        public Dictionary<int, List<TrainStations>> StationMapping;
+        public string MaxDistance = string.Empty; 
 
-        //public Dictionary<int, Dictionary<string, int>> StationMapping = new Dictionary<int, Dictionary<string, int>>();
-        public Dictionary<int, List<TrainStations>> StationMapping = new Dictionary<int, List<TrainStations>>();  
-
-        public Dictionary<int, List<TrainStations>> CalculateEndToEnd(List<char> Routes)
+        public RoutesView CalculateEndToEnd(List<char> Routes, string maxDistance)
         {
-            int distance = 0;
-            int x = 0;
+            int index = 0;
             bool startPoint = false;
             List<TrainStations> mappings = new List<TrainStations>();
+            MaxDistance = maxDistance;
+            StationMapping = new Dictionary<int, List<TrainStations>>();
             do
             {
-                x++;
+                index++;
                 for (int stationDistanceCount = 0; stationDistanceCount < StationsDistance.Count; stationDistanceCount++)
                 {
                     var stationCode = StationsDistance[stationDistanceCount].Station.ToCharArray();
                     
                     if (!startPoint && stationCode[0] == Routes[0]) {
+                        //CaptureFirstStation
                         if (!StationMapping.Any() || StationMapping.Any() &&
                             StationMapping.Last().Value.First().Station != StationsDistance[stationDistanceCount].Station)
                         {
                             startPoint = true;
-                           // distance = distance + StationsDistance[stationDistanceCount].Distance;
+
+                            //return in trainstation objecct to mappings
                             mappings.Add(new TrainStations
                             {
                                 Station = StationsDistance[stationDistanceCount].Station,
                                 Distance = StationsDistance[stationDistanceCount].Distance
-                            }
-                        );
+                            });
                             stationDistanceCount = -1;
-                             
                         }
                     }
                     else if (startPoint && mappings.Any() && stationCode[0] == mappings.Last().Station.ToCharArray()[1] && stationCode[1] == Routes[1])
                     {
-                        int test7 = -1;
+                        //CheckMappingForExisiting
+                        int foundIndex = -1;
                         foreach (var stationMap in StationMapping.Values)
                         {
-                            List<String> test5 = stationMap.Select(i => i.Station)
-                            .ToList();
-                            test7 = test5.IndexOf(StationsDistance[stationDistanceCount].Station);
-
+                            foundIndex = stationMap.Select(i => i.Station).ToList()
+                                        .IndexOf(StationsDistance[stationDistanceCount].Station);
                         }
 
-                        if (test7 != -1 
-                            /*mappings[test7].Station !=
-                            StationsDistance[stationDistanceCount].Station*/)
+                        if (foundIndex != -1)
                         {
                             mappings.Add(new TrainStations
                             {
@@ -78,19 +76,23 @@ namespace OSPF.TrainDistances.Models
                             });
                             break;
                         }
-                        if ( //found &&
-                            StationMapping.Values.Any(
+
+                        if ( StationMapping.Values.Any(
                                 y => y.Any(o => o.Station == StationsDistance[stationDistanceCount].Station)) 
                                     )
                         {
                             continue;
                         }
+
+                        
+                        //return in trainstation objecct to mappings
                         mappings.Add(new TrainStations
                         {
                             Station = StationsDistance[stationDistanceCount].Station,
                             Distance = StationsDistance[stationDistanceCount].Distance
 
                         });
+
                         break;
                     }
                     else if (startPoint && mappings.Any() && stationCode[0] == mappings.Last().Station.ToCharArray()[1] && 
@@ -104,45 +106,48 @@ namespace OSPF.TrainDistances.Models
                         stationDistanceCount = -1;
                     } 
                 }
+
                 if (startPoint && mappings.Any() && mappings.Last().Station.ToCharArray()[1] == Routes[1])
                 {
                     if (!StationMapping.Any() || !CheckDistinct(StationMapping.Values.SelectMany(train => train).ToList(), mappings))
                     {
-                        StationMapping.Add(x, mappings);
+                        StationMapping.Add(index, mappings);
                         mappings = new List<TrainStations>();
                     }
                 }
+
                 startPoint = false;
-
-
-            } while ( x < StationsDistance.Count);
-            //TrainStationsDetails details = new TrainStationsDetails(stationMapping.Values.ElementAt(stat));
+            } while ( index < StationsDistance.Count);
             
-            StationMapping = MergeAdditionalRoutes(StationMapping);
-            return StationMapping;
+            var completeRoutes = MergeAdditionalRoutes(StationMapping);
+
+            return completeRoutes.Any() ? new RoutesView
+            {
+                DifferentRoutes = completeRoutes.Select(cr => cr.Station).ToList(),
+                Distance = completeRoutes.Min(cr => cr.Distance),
+                RoutesCount = completeRoutes.Count(),
+                ShortestRoute = completeRoutes.OrderBy(cr => cr.Distance).First().Distance
+            } : new RoutesView();
         }
 
         private bool CheckDistinct(List<TrainStations> stationMappings, List<TrainStations> mappings, bool isSingle = false)
         {
-            foreach (var stationMapping in stationMappings)
+            if (stationMappings.Count == mappings.Count)
             {
-                if (stationMappings.Count == mappings.Count)
+                for (int map = 0; map < mappings.Count; map++)
                 {
-                    for (int map = 0; map < mappings.Count; map++)
+                    if (stationMappings[map].Distance == mappings[map].Distance &&
+                        stationMappings[map].Station == mappings[map].Station)
                     {
-                        if (stationMappings[map].Distance == mappings[map].Distance &&
-                            stationMappings[map].Station == mappings[map].Station)
-                        {
-                            return true;
-                        }
+                        return true;
                     }
                 }
+            }
 
-                if (isSingle && stationMappings.Any(sm => sm.Distance == mappings.First().Distance 
-                    && sm.Station == mappings.First().Station))
-                {
-                    return true;
-                }
+            if (isSingle && stationMappings.Any(sm => sm.Distance == mappings.First().Distance 
+                && sm.Station == mappings.First().Station))
+            {
+                return true;
             }
 
             return false;
@@ -153,23 +158,20 @@ namespace OSPF.TrainDistances.Models
             return CheckDistinct(stationMappings, mappings, true);
         }
 
-        private Dictionary<int, List<TrainStations>> AggregateStationsToRoute()
+        private List<TrainStations> AggregateStationsToRoute()
         {
             var stationMapping = new Dictionary<int, List<TrainStations>>();
 
             int count = 0;
-            stationMapping.Add(count, new List<TrainStations>
-            {
-
-            });
+            stationMapping.Add(count, new List<TrainStations>());
             foreach (var stat in StationMapping.Values)
             {
-                TrainStationsDetails details = new TrainStationsDetails(stat);
+                TrainStationsAggregate aggregate = new TrainStationsAggregate(stat);
                 List<TrainStations> temp = new List<TrainStations>
                 {
                     new TrainStations {
-                        Station = details.Route,
-                        Distance = details.RouteDistance
+                        Station = aggregate.Route,
+                        Distance = aggregate.RouteDistance
                     }
                 };
 
@@ -179,40 +181,37 @@ namespace OSPF.TrainDistances.Models
                 }
             }
 
-            return stationMapping;
+            return stationMapping.Values.First();
         }
-
-        //refactor into smaller methods 
-        public Dictionary<int, List<TrainStations>> MergeAdditionalRoutes(Dictionary<int, List<TrainStations>> stationMapping)
+         
+        public List<TrainStations> MergeAdditionalRoutes(Dictionary<int, List<TrainStations>> stationMapping)
         {
             string stationRoute = string.Empty;
             string invertStationRoute = string.Empty;
             int distance = 0;
-            int count = 0;
-            List<TrainStations> trains = new List<TrainStations>();
             bool started = false;
             bool completed = false;
+            List<TrainStations> trains = new List<TrainStations>();
             List<TrainStations> groupedStations = new List<TrainStations>();
 
-            
-            //foreach (var stationMap in stationMapping.Values)
             for (int stat = 0; stat < stationMapping.Values.Count; stat++)
             {
                 
-                TrainStationsDetails details = new TrainStationsDetails(stationMapping.Values.ElementAt(stat));
+                TrainStationsAggregate aggregate = new TrainStationsAggregate(stationMapping.Values.ElementAt(stat));
                 if (distance == 0 && started == false)
                 {
                     started = true;
-                    stationRoute = details.Route;
-                    distance = details.RouteDistance;
+                    stationRoute = aggregate.Route;
+                    distance = aggregate.RouteDistance;
                     stat = -1;
                     continue;
                 }
-                if (details.RouteDistance <= 10)
+
+                if (aggregate.RouteDistance <= int.Parse(MaxDistance) / 3)
                 {
-                    
-                    stationRoute = details.Route + details.Route + details.Route;
-                    distance = details.RouteDistance + details.RouteDistance + details.RouteDistance;
+                    //CaptureRoutesLessThanThirdOfMax
+                    stationRoute = aggregate.Route + aggregate.Route + aggregate.Route;
+                    distance = aggregate.RouteDistance + aggregate.RouteDistance + aggregate.RouteDistance;
 
                     trains = new List<TrainStations>
                     {
@@ -235,11 +234,11 @@ namespace OSPF.TrainDistances.Models
                     trains = new List<TrainStations>();
                 }
 
-                if (details.RouteDistance <= 15 && started)
+                if (aggregate.RouteDistance <= int.Parse(MaxDistance) / 2 && started)
                 {
-                    
-                    stationRoute = details.Route + details.Route;
-                    distance = details.RouteDistance + details.RouteDistance;
+                    //CaptureRoutesLessThanHalfOfMax
+                    stationRoute = aggregate.Route + aggregate.Route;
+                    distance = aggregate.RouteDistance + aggregate.RouteDistance;
                     trains = new List<TrainStations>
                     {
                         new TrainStations {
@@ -260,13 +259,13 @@ namespace OSPF.TrainDistances.Models
                     trains = new List<TrainStations>();
                 }
 
-                if ((distance + details.RouteDistance) <= 30)
+                if ((distance + aggregate.RouteDistance) <= int.Parse(MaxDistance))
                 {
-
+                    //CaptureRoutesLessThanMax
                     var temp = stationRoute;
-                    stationRoute = details.Route + temp;
-                    invertStationRoute = temp + details.Route;
-                    distance = details.RouteDistance + distance;
+                    stationRoute = aggregate.Route + temp;
+                    invertStationRoute = temp + aggregate.Route;
+                    distance = aggregate.RouteDistance + distance;
                     if (!trains.Any())
                     {
                         trains = new List<TrainStations>
@@ -281,15 +280,15 @@ namespace OSPF.TrainDistances.Models
                     }
                     else
                     {
-                        stationRoute = trains.First().Station + details.Route;
-                        invertStationRoute = details.Route + trains.First().Station;
-                        distance = trains.First().Distance + details.RouteDistance;
+                        stationRoute = trains.First().Station + aggregate.Route;
+                        invertStationRoute = aggregate.Route + trains.First().Station;
+                        distance = trains.First().Distance + aggregate.RouteDistance;
                         trains.First().Merged = true;
                     }
 
 
                     if (trains.First().Merged && !CheckDistinctOnSingle(groupedStations, trains)
-                        && distance < 30)
+                        && distance < int.Parse(MaxDistance))
                     {
                         groupedStations.Add(new TrainStations
                         {
@@ -323,13 +322,13 @@ namespace OSPF.TrainDistances.Models
                 {
                     for (int statMap = 0; statMap < stationMapping.Values.Count; statMap++)
                     {
-                        TrainStationsDetails detailsMap = new TrainStationsDetails(stationMapping.Values.ElementAt(statMap));
-                        if ((details.RouteDistance + detailsMap.RouteDistance) <= 30)
+                        TrainStationsAggregate aggregateMap = new TrainStationsAggregate(stationMapping.Values.ElementAt(statMap));
+                        if ((aggregate.RouteDistance + aggregateMap.RouteDistance) <= int.Parse(MaxDistance))
                         {
                             var temp = stationRoute;
-                            stationRoute = detailsMap.Route + details.Route;
-                            invertStationRoute = details.Route + detailsMap.Route;
-                            distance = detailsMap.RouteDistance + details.RouteDistance;
+                            stationRoute = aggregateMap.Route + aggregate.Route;
+                            invertStationRoute = aggregate.Route + aggregateMap.Route;
+                            distance = aggregateMap.RouteDistance + aggregate.RouteDistance;
                             if (!trains.Any())
                             {
                                 trains = new List<TrainStations>
@@ -345,7 +344,7 @@ namespace OSPF.TrainDistances.Models
                             
 
                             if (trains.First().Merged && !CheckDistinctOnSingle(groupedStations, trains)
-                                && distance < 30)
+                                && distance < int.Parse(MaxDistance))
                             {
                                 groupedStations.Add(new TrainStations
                                 {
@@ -374,23 +373,19 @@ namespace OSPF.TrainDistances.Models
                                 }
                             }
                         }
-
-                       
                     }
                 }
             }
 
-            stationMapping = AggregateStationsToRoute();
-            stationMapping.Add(stationMapping.Count + 1, groupedStations);
-
-            return stationMapping;
+            stationMapping = new Dictionary<int, List<TrainStations>> {{0, AggregateStationsToRoute()}};
+            stationMapping.Values.First().AddRange(groupedStations);
+            return stationMapping.Values.First();
         }
 
-        public int CalculateStationByStation(List<char> Routes)
+        public RoutesView CalculateStationByStation(List<char> Routes)
         {
-            int distance = 0;
             bool routeFound = false;
-
+            RoutesView routesView = new RoutesView();
             for (int userEntry = 0; userEntry < Routes.Count - 1; userEntry++)
             {
                 foreach (var stationDistance in StationsDistance)
@@ -399,20 +394,20 @@ namespace OSPF.TrainDistances.Models
                     if (stationCode[0] == Routes[userEntry] && stationCode[1] == Routes[userEntry + 1])
                     {
                         routeFound = true;
-                        distance = distance + stationDistance.Distance;
+                        routesView.DifferentRoutes = new List<string>() { stationDistance.Station };
+                        routesView.Distance = stationDistance.Distance;
                     }
                 }
 
                 if (routeFound == false)
                 {
-                    distance = -1;
-                    break;
+                    return new RoutesView();                    
                 }
 
                 routeFound = false;
             }
             
-            return distance;
+            return routesView;
         }
     }
 }

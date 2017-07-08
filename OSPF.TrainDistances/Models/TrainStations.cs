@@ -11,16 +11,15 @@ namespace OSPF.TrainDistances.Models
         public string Station { get; set; }
         public int Distance { get; set; }
         public bool Merged { get; set; }
-        public TrainStationsDetails Details { get; set; }
     }
 
-    public class TrainStationsDetails
+    public class TrainStationsAggregate
     {
-        public TrainStationsDetails()
+        public TrainStationsAggregate()
         {
         }
 
-        public TrainStationsDetails(List<TrainStations> trainStations)
+        public TrainStationsAggregate(List<TrainStations> trainStations)
         {
             string stationGrouped = string.Empty;
             var stations = trainStations.Select(x => x.Station).ToList();

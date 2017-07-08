@@ -16,8 +16,8 @@ namespace OSPF.TrainDistances
             while (isExit.ToLower() != "exit")
             {
                 promptOperator.GreetingPrompt();
-                promptOperator.SelectRouteType();
-                promptOperator.StationRoute();
+                var routeType = promptOperator.SelectRouteType();
+                promptOperator.StationRoute(routeType);
                 promptOperator.Calculate();
                 Console.WriteLine("To quit enter [Exit, exit], any other entry will restart the train time check");
                 isExit = Console.ReadLine();

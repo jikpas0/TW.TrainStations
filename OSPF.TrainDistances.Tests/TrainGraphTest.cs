@@ -29,10 +29,10 @@ namespace OSPF.TrainDistances.Tests
             List<char> stationsStub = new List<char> {'C', 'C'};
 
             //Act
-            Dictionary<int, List<TrainStations>> calulcatedDistance = trainDistances.CalculateEndToEnd(stationsStub);
+            RoutesView routesView = trainDistances.CalculateEndToEnd(stationsStub, "30");
             
             //Assert
-            Assert.IsNotNull(calulcatedDistance);
+            Assert.IsNotNull(routesView.Distance);
         }
 
         [Test]
@@ -81,7 +81,7 @@ namespace OSPF.TrainDistances.Tests
             };
 
             //Act
-            Dictionary<int, List<TrainStations>> calulcatedDistance = trainDistances.MergeAdditionalRoutes(stationsStub);
+            List<TrainStations> calulcatedDistance = trainDistances.MergeAdditionalRoutes(stationsStub);
 
             //Assert
             Assert.IsNotNull(calulcatedDistance);
@@ -99,10 +99,10 @@ namespace OSPF.TrainDistances.Tests
             //List<char> stationsStub = new List<char> { 'A', 'B', 'C', 'D', 'E' };
 
             //Act
-            int calulcatedDistance = trainDistances.CalculateStationByStation(stationsStub.ToList());
+            RoutesView routesView = trainDistances.CalculateStationByStation(stationsStub.ToList());
 
             //Assert
-            Assert.That(calulcatedDistance, Is.EqualTo(obtained), "Real part");
+            Assert.That(routesView.Distance, Is.EqualTo(obtained), "Real part");
         }
 
         /* Basic Test Inputs: distance for a set route

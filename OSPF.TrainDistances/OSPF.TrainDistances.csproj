@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Models\PromptOperator.cs" />
+    <Compile Include="Models\RoutesView.cs" />
     <Compile Include="Models\TrainDistanceProcessor.cs" />
     <Compile Include="Models\TrainStations.cs" />
     <Compile Include="TrainGraph.cs" />
