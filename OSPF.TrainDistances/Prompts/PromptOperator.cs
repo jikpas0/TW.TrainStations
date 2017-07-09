@@ -1,47 +1,42 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using OSPF.TrainDistances.BusinessLogic;
+using OSPF.TrainDistances.Models;
+using OSPF.TrainDistances.BusinessLogic.Interfaces;
 
-namespace OSPF.TrainDistances.Models
+namespace OSPF.TrainDistances.Prompts
 {
     public class PromptOperator
     {
-        private static TrainDistanceProcessor _trainDistanceOperator ;
-        public PromptOperator()
+        private static ITrainDistance _trainDistance;
+        private static Prompt _prompt;
+
+        public PromptOperator(ITrainDistance trainDistance, Prompt prompt)
         {
-            _trainDistanceOperator = new TrainDistanceProcessor();
+            _trainDistance = trainDistance;
+            _prompt = prompt;
         }
 
-        public string RouteType { get; set; }
-        public List<char> Route { get; set; }
-        public string MaxDistance { get; set; }
-        public RoutesView RoutesView { get; set; }
+        public PromptOperator() : this(new TrainDistance(), new Prompt())
+        {
+
+        }
+
         public void GreetingPrompt()
         {
             Console.WriteLine("Hello world");
         }
-
-
-        /*
-        Distance station by station: TODO: Done
-
-
-        TODO: Required console prompts for following or display all information in one go
-        Number of different routes end to end: TODO: display different routes
-        length of shortest route end to end: TODO: display shortest rotues
-        Number of different routes end to end (with max distance): TODO: Implement max distance to end to end
-        */
+        
         public string SelectRouteType()
         {
             Console.WriteLine("Select Route Type [E,e] End to End, [S,s] station by station:");
-            RouteType = Console.ReadLine();
-            while (!string.IsNullOrEmpty(RouteType) && (RouteType.ToLower() != "e" && RouteType.ToLower() != "s"))
+            _prompt.RouteType = Console.ReadLine();
+            while (!string.IsNullOrEmpty(_prompt.RouteType) && (_prompt.RouteType.ToLower() != "e" && _prompt.RouteType.ToLower() != "s"))
             {
                 Console.WriteLine("Please Enter a valid choice");
                 Console.WriteLine("Please Enter Route Type [E,e] End to End, [S,s] station by station:");
-                RouteType = Console.ReadLine();
+                _prompt.RouteType = Console.ReadLine();
             }
 
             
@@ -51,12 +46,12 @@ namespace OSPF.TrainDistances.Models
             Console.WriteLine("Station by station route requires less than or equal to five stations to fulfill");
             Console.WriteLine("enter [X, x] once the two entries are entered");
 
-            return RouteType;
+            return _prompt.RouteType;
         }
 
         public void StationRoute(string routeType)
         {
-            Route = new List<char>();
+            _prompt.Route = new List<char>();
             string station = string.Empty;
             string[] stations = new[] {"A", "B", "C", "D", "E", "X"};
             int routeCount = 2;
@@ -65,7 +60,7 @@ namespace OSPF.TrainDistances.Models
             {
                 routeCount = 5;
             }
-            while (station != "x" && Route.Count <= routeCount)
+            while (station != "x" && _prompt.Route.Count <= routeCount)
             {
                 Console.WriteLine("");
                 Console.WriteLine("Select Route [A, B, C, D, E], enter [X, x] to complete route:");
@@ -82,11 +77,11 @@ namespace OSPF.TrainDistances.Models
                     return;
                 }
 
-                Route.Add(!string.IsNullOrEmpty(station) && station.Length > 0 ? station.ToUpper().ToCharArray().FirstOrDefault() : new char());
-                if (Route.Count == routeCount)
+                _prompt.Route.Add(!string.IsNullOrEmpty(station) && station.Length > 0 ? station.ToUpper().ToCharArray().FirstOrDefault() : new char());
+                if (_prompt.Route.Count == routeCount)
                 {
                     Console.WriteLine("Please Enter maximum distance filter, enter [A,a] for no filtering");
-                    MaxDistance = Console.ReadLine();
+                    _prompt.MaxDistance = Console.ReadLine();
                     Console.WriteLine("enter any key to continue to complete route:");
                     Console.ReadLine();
                     break;
@@ -96,19 +91,20 @@ namespace OSPF.TrainDistances.Models
 
         public void Calculate()
         {
-            if (RouteType.ToLower() == "e")
+            if (_prompt.RouteType.ToLower() == "e")
             {
-                RoutesView = CalculateEndToEnd(Route);
+                _prompt.RoutesView = CalculateEndToEnd(_prompt.Route);
                 Console.WriteLine("Different available rotues: " +
-                                  RoutesView.DifferentRoutes.Aggregate((i, j) => i + " " + j));
-                Console.WriteLine("Number of different routes: " + RoutesView.RoutesCount);
-                Console.WriteLine("Shortest possible route: " + RoutesView.ShortestRoute);
+                                  _prompt.RoutesView.DifferentRoutes.Aggregate((i, j) => i + " " + j));
+                Console.WriteLine("Number of different routes: " + _prompt.RoutesView.RoutesCount);
+                Console.WriteLine("Shortest possible route: " + _prompt.RoutesView.ShortestRoute);
             }
-            else if (RouteType.ToLower() == "s")
+            else if (_prompt.RouteType.ToLower() == "s")
             {
-                RoutesView = CalculateStationByStation(Route);
-                Console.WriteLine("Number of different routes: " + RoutesView.DifferentRoutes.Aggregate((i, j) => i + " " + j));
-                Console.WriteLine("Shortest possible route: " + RoutesView.Distance);
+                _prompt.RoutesView = CalculateStationByStation(_prompt.Route);
+                Console.WriteLine("Number of different routes: " +
+                                _prompt.RoutesView.DifferentRoutes.Aggregate((i, j) => i + " " + j));
+                Console.WriteLine("Shortest possible route: " + _prompt.RoutesView.Distance);
             }
             else
             {
@@ -119,14 +115,14 @@ namespace OSPF.TrainDistances.Models
 
         public RoutesView CalculateEndToEnd(List<char> Route)
         {
-            RoutesView routesView = _trainDistanceOperator.CalculateEndToEnd(Route, MaxDistance);
+            RoutesView routesView = _trainDistance.CalculateEndToEnd(Route, _prompt.MaxDistance);
            
             return routesView;
         }
 
         public RoutesView CalculateStationByStation(List<char> Route)
         {
-            RoutesView routesView = _trainDistanceOperator.CalculateStationByStation(Route);
+            RoutesView routesView = _trainDistance.CalculateStationByStation(Route);
             
             return routesView;
         }

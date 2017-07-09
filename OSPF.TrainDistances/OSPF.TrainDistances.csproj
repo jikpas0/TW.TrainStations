@@ -43,9 +43,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Models\PromptOperator.cs" />
+    <Compile Include="BusinessLogic\Interfaces\ITrainDistance.cs" />
+    <Compile Include="Models\Prompt.cs" />
+    <Compile Include="Prompts\PromptOperator.cs" />
     <Compile Include="Models\RoutesView.cs" />
-    <Compile Include="Models\TrainDistanceProcessor.cs" />
+    <Compile Include="BusinessLogic\TrainDistance.cs" />
     <Compile Include="Models\TrainStations.cs" />
     <Compile Include="TrainGraph.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -53,6 +55,7 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using NUnit.Framework;
+using OSPF.TrainDistances.BusinessLogic;
 using OSPF.TrainDistances.Models;
 
 namespace OSPF.TrainDistances.Tests
@@ -25,7 +26,7 @@ namespace OSPF.TrainDistances.Tests
         public void ShouldReturnEndToEndDistance()
         {
             //Setup
-            TrainDistanceProcessor trainDistances = new TrainDistanceProcessor();
+            TrainDistance trainDistances = new TrainDistance();
             List<char> stationsStub = new List<char> {'C', 'C'};
 
             //Act
@@ -39,30 +40,39 @@ namespace OSPF.TrainDistances.Tests
         public void ShouldReturnAllPossibleRoutes()
         {
             //Setup
-            TrainDistanceProcessor trainDistances = new TrainDistanceProcessor();
+            TrainDistance trainDistances = new TrainDistance();
             Dictionary<int, List<TrainStations>> stationsStub = new Dictionary<int, List<TrainStations>>
             {
                 { 0, new List<TrainStations> 
                     {
                         new TrainStations {
-                            Station = "AB",
-                            Distance = 15,
+                            Station = "CD",
+                            Distance = 3,
+                            Merged = false
                         },
                         new TrainStations { 
-                            Station = "BC",
-                            Distance = 13
+                            Station = "DC",
+                            Distance = 4,
+                            Merged = false
                         }
                     }
                 },
                 { 1, new List<TrainStations> 
                     {
                         new TrainStations {
-                            Station = "CD",
-                            Distance = 9,
+                            Station = "CE",
+                            Distance = 2,
+                            Merged = false
                         },
                         new TrainStations { 
-                            Station = "DE",
-                            Distance = 15
+                            Station = "EB",
+                            Distance = 4,
+                            Merged = false
+                        },
+                        new TrainStations {
+                            Station = "BC",
+                            Distance = 2,
+                            Merged = false
                         }
                     }
                 },
@@ -71,17 +81,20 @@ namespace OSPF.TrainDistances.Tests
                         new TrainStations {
                             Station = "EA",
                             Distance = 9,
+                            Merged = false
                         },
                         new TrainStations { 
                             Station = "AC",
-                            Distance = 5
+                            Distance = 5,
+                            Merged = false
                         }
                     }
                 }
             };
 
             //Act
-            List<TrainStations> calulcatedDistance = trainDistances.MergeAdditionalRoutes(stationsStub);
+            List<TrainStations> calulcatedDistance = trainDistances.MergeAdditionalRoutes(stationsStub, 30)
+                .Where(md => md.Distance < 30).ToList();
 
             //Assert
             Assert.IsNotNull(calulcatedDistance);
@@ -95,7 +108,7 @@ namespace OSPF.TrainDistances.Tests
         public void ShouldReturnStationDistances(char[] stationsStub, int obtained)
         {
             //Setup
-            TrainDistanceProcessor trainDistances = new TrainDistanceProcessor();
+            TrainDistance trainDistances = new TrainDistance();
             //List<char> stationsStub = new List<char> { 'A', 'B', 'C', 'D', 'E' };
 
             //Act
