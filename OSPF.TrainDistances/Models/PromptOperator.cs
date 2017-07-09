@@ -70,7 +70,7 @@ namespace OSPF.TrainDistances.Models
                 Console.WriteLine("");
                 Console.WriteLine("Select Route [A, B, C, D, E], enter [X, x] to complete route:");
                 station = Console.ReadLine();
-                while (!string.IsNullOrEmpty(station) && station.Length == 1 && !stations.Contains(station.ToUpper()))
+                while (string.IsNullOrEmpty(station) || (station.Length == 1 && !stations.Contains(station.ToUpper())))
                 {
                     Console.WriteLine("Please Enter a valid station reference letter");
                     Console.WriteLine("Please Enter Route [A, B, C, D, E], enter [X, x] to complete route:");
@@ -99,19 +99,22 @@ namespace OSPF.TrainDistances.Models
             if (RouteType.ToLower() == "e")
             {
                 RoutesView = CalculateEndToEnd(Route);
+                Console.WriteLine("Different available rotues: " +
+                                  RoutesView.DifferentRoutes.Aggregate((i, j) => i + " " + j));
+                Console.WriteLine("Number of different routes: " + RoutesView.RoutesCount);
+                Console.WriteLine("Shortest possible route: " + RoutesView.ShortestRoute);
             }
-            else
+            else if (RouteType.ToLower() == "s")
             {
                 RoutesView = CalculateStationByStation(Route);
+                Console.WriteLine("Number of different routes: " + RoutesView.DifferentRoutes.Aggregate((i, j) => i + " " + j));
+                Console.WriteLine("Shortest possible route: " + RoutesView.Distance);
             }
-            if (!RoutesView.DifferentRoutes.Any())
+            else
             {
                 Console.WriteLine("NO SUCH ROUTE");
                 return;
             }
-            Console.WriteLine("Different available rotues: " + RoutesView.DifferentRoutes.Aggregate((i, j) => i + " " + j));
-            Console.WriteLine("Number of different routes: " + RoutesView.RoutesCount);
-            Console.WriteLine("Shortest possible route: " + RoutesView.ShortestRoute);
         }
 
         public RoutesView CalculateEndToEnd(List<char> Route)
@@ -124,7 +127,7 @@ namespace OSPF.TrainDistances.Models
         public RoutesView CalculateStationByStation(List<char> Route)
         {
             RoutesView routesView = _trainDistanceOperator.CalculateStationByStation(Route);
-
+            
             return routesView;
         }
     }

@@ -119,11 +119,11 @@ namespace OSPF.TrainDistances.Models
                 startPoint = false;
             } while ( index < StationsDistance.Count);
             
-            var completeRoutes = MergeAdditionalRoutes(StationMapping);
+            var completeRoutes = MergeAdditionalRoutes(StationMapping).Where(md => md.Distance < int.Parse(MaxDistance));
 
             return completeRoutes.Any() ? new RoutesView
             {
-                DifferentRoutes = completeRoutes.Select(cr => cr.Station).ToList(),
+                DifferentRoutes = completeRoutes.Select(cr =>  cr.Station + " " + cr.Distance ).ToList(),
                 Distance = completeRoutes.Min(cr => cr.Distance),
                 RoutesCount = completeRoutes.Count(),
                 ShortestRoute = completeRoutes.OrderBy(cr => cr.Distance).First().Distance
@@ -386,6 +386,7 @@ namespace OSPF.TrainDistances.Models
         {
             bool routeFound = false;
             RoutesView routesView = new RoutesView();
+            List<string> routes = new List<string>();
             for (int userEntry = 0; userEntry < Routes.Count - 1; userEntry++)
             {
                 foreach (var stationDistance in StationsDistance)
@@ -394,8 +395,8 @@ namespace OSPF.TrainDistances.Models
                     if (stationCode[0] == Routes[userEntry] && stationCode[1] == Routes[userEntry + 1])
                     {
                         routeFound = true;
-                        routesView.DifferentRoutes = new List<string>() { stationDistance.Station };
-                        routesView.Distance = stationDistance.Distance;
+                        routes.Add(stationDistance.Station);
+                        routesView.Distance = routesView.Distance + stationDistance.Distance;
                     }
                 }
 
@@ -406,7 +407,7 @@ namespace OSPF.TrainDistances.Models
 
                 routeFound = false;
             }
-            
+            routesView.DifferentRoutes = routes;
             return routesView;
         }
     }
