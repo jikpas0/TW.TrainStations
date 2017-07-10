@@ -14,7 +14,7 @@ namespace OSPF.TrainDistances
         {
             PromptOperator promptOperator = new PromptOperator();
             string isExit = string.Empty;
-            while (!string.IsNullOrEmpty(isExit) && isExit.ToLower() != "exit")
+            while (isExit.ToLower() != "exit")
             {
                 promptOperator.GreetingPrompt();
                 var routeType = promptOperator.SelectRouteType();

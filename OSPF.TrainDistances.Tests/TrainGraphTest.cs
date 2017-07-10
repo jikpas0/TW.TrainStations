@@ -34,6 +34,9 @@ namespace OSPF.TrainDistances.Tests
             
             //Assert
             Assert.IsNotNull(routesView.Distance);
+            Assert.That(routesView.Distance, Is.EqualTo(9));
+            Assert.That(routesView.ShortestRoute, Is.EqualTo(9));
+            Assert.That(routesView.DifferentRoutes.Count, Is.EqualTo(7));
         }
 
         [Test]
@@ -98,6 +101,11 @@ namespace OSPF.TrainDistances.Tests
 
             //Assert
             Assert.IsNotNull(calulcatedDistance);
+            Assert.That(calulcatedDistance.Count, Is.EqualTo(7));
+            Assert.That(calulcatedDistance.Count, Is.EqualTo(7));
+            Assert.That(calulcatedDistance.Any(x => x.Station == "EAACEAAC"));
+            Assert.That(calulcatedDistance.Any(x => x.Station == "CEEBBCCEEBBC"));
+            Assert.That(calulcatedDistance.Any(x => x.Station == "CD"));
         }
 
         //AB5, BC4, CD8, DC8, DE6, AD5, CE2, EB3, AE7
@@ -118,26 +126,91 @@ namespace OSPF.TrainDistances.Tests
             Assert.That(routesView.Distance, Is.EqualTo(obtained), "Real part");
         }
 
-        /* Basic Test Inputs: distance for a set route
-        The distance of the route A-B-C.
-        The distance of the route A-D.
-        The distance of the route A-D-C.
-        The distance of the route A-E-B-C-D.
-        The distance of the route A-E-D.
 
-        Complex Test Inputs: starting and ending at a set station
-        The number of trips starting at C and ending at C with a maximum of 3 stops.
-        In the sample data below, there are two such trips: C-D-C(2 stops). and C-E-B-C(3 stops).
+        [TestCase(new[] { "AB", "BC" }, new[] { "AB", "BC" }, true, false )]
+        [TestCase(new[] { "DE", "ED" }, new[] { "AB", "BC" }, false, false )]
+        [TestCase(new[] { "AB", "BC" }, new[] { "AB"  }, true, true)]
+        [TestCase(new[] { "DE", "ED" }, new[] { "AB" }, false, true)]
+        public void ShouldReturnFalseIfDistinct(string[] station, string[] stationCompare, bool expectedResult, bool isSingle)
+        {
+            //Setup
+            TrainDistance trainDistances = new TrainDistance();
+            List<TrainStations> trainStations = new List<TrainStations>
+            {
+                new TrainStations
+                {
+                    Distance = 1,
+                    Station = station[0]
+                },
+                new TrainStations
+                {
+                    Distance = 1,
+                    Station = station[1]
+                }
+            };
+            List<TrainStations> trainStationsCompare = new List<TrainStations>
+            {
+                new TrainStations
+                {
+                    Distance = 1,
+                    Station = stationCompare[0]
+                },
+                !isSingle ? new TrainStations
+                {
+                    Distance = 1,
+                    Station = stationCompare[1]
+                } : new TrainStations()
+            };
 
-        The number of trips starting at A and ending at C with exactly 4 stops.
-        In the sample data below, there are three such trips: 
-        A to C(via B, C, D); A to C(via D, C, D); and A to C(via D, E, B).
+            //Act
+            bool isDistinct = trainDistances.CheckDistinct(trainStations, trainStationsCompare, isSingle);
 
-        The length of the shortest route(in terms of distance to travel) from A to C.
+            //Assert
+            Assert.AreEqual(isDistinct, expectedResult);
+        }
 
-        The length of the shortest route (in terms of distance to travel) from B to B.
+        [Test]
+        public void ShouldMergeRoutes()
+        {
+            //Setup
+            TrainDistance trainDistances = new TrainDistance();
 
-        The number of different routes from C to C with a distance of less than 30.  
-        In the sample data, the trips are: CDC, CEBC, CEBCDC, CDCEBC, CDEBC, CEBCEBC, CEBCEBCEBC.*/
+            //Act
+            Dictionary<int, List<TrainStations>> mappings = new Dictionary<int, List<TrainStations>>
+            {
+                { 0, new List<TrainStations>
+                    {
+                        new TrainStations
+                        {
+                          Distance = 1,
+                          Station = "AB",
+                        },
+                        new TrainStations
+                        {
+                          Distance = 1,
+                          Station = "BC",
+                        },
+                        new TrainStations
+                        {
+                          Distance = 1,
+                          Station = "CD",
+                        },
+                        new TrainStations
+                        {
+                          Distance = 1,
+                          Station = "DE",
+                        }
+
+                    }
+                }
+            };
+
+            var aggregatedResult = trainDistances.AggregateStationsToRoute(mappings);
+
+            Assert.IsNotNull(aggregatedResult);
+            Assert.That(aggregatedResult.FirstOrDefault(), Is.Not.Null);
+            Assert.That(aggregatedResult.FirstOrDefault().Distance, Is.EqualTo(4));
+            Assert.That(aggregatedResult.FirstOrDefault().Station, Is.EqualTo("ABBCCDDE"));
+        }
     }
 }

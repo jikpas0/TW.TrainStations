@@ -25,17 +25,22 @@ namespace OSPF.TrainDistances.Prompts
 
         public void GreetingPrompt()
         {
+            Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("Hello world");
         }
         
         public string SelectRouteType()
         {
             Console.WriteLine("Select Route Type [E,e] End to End, [S,s] station by station:");
+            Console.Write("> ");
             _prompt.RouteType = Console.ReadLine();
             while (!string.IsNullOrEmpty(_prompt.RouteType) && (_prompt.RouteType.ToLower() != "e" && _prompt.RouteType.ToLower() != "s"))
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Please Enter a valid choice");
+                Console.ForegroundColor = ConsoleColor.White;
                 Console.WriteLine("Please Enter Route Type [E,e] End to End, [S,s] station by station:");
+                Console.Write("> ");
                 _prompt.RouteType = Console.ReadLine();
             }
 
@@ -64,11 +69,15 @@ namespace OSPF.TrainDistances.Prompts
             {
                 Console.WriteLine("");
                 Console.WriteLine("Select Route [A, B, C, D, E], enter [X, x] to complete route:");
+                Console.Write("> ");
                 station = Console.ReadLine();
-                while (string.IsNullOrEmpty(station) || (station.Length == 1 && !stations.Contains(station.ToUpper())))
+                while (string.IsNullOrEmpty(station) || (station.Length > 1 && !stations.Equals(station.ToUpper())))
                 {
+                    Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine("Please Enter a valid station reference letter");
+                    Console.ForegroundColor = ConsoleColor.White;
                     Console.WriteLine("Please Enter Route [A, B, C, D, E], enter [X, x] to complete route:");
+                    Console.Write("> ");
                     station = Console.ReadLine();
                 }
 
@@ -81,8 +90,10 @@ namespace OSPF.TrainDistances.Prompts
                 if (_prompt.Route.Count == routeCount)
                 {
                     Console.WriteLine("Please Enter maximum distance filter, enter [A,a] for no filtering");
+                    Console.Write("> ");
                     _prompt.MaxDistance = Console.ReadLine();
                     Console.WriteLine("enter any key to continue to complete route:");
+                    Console.Write("> ");
                     Console.ReadLine();
                     break;
                 }
@@ -102,14 +113,14 @@ namespace OSPF.TrainDistances.Prompts
             else if (_prompt.RouteType.ToLower() == "s")
             {
                 _prompt.RoutesView = CalculateStationByStation(_prompt.Route);
+                if (_prompt.RoutesView.Distance == -1)
+                {
+                    Console.WriteLine("NO SUCH ROUTE");
+                    return;
+                }
                 Console.WriteLine("Number of different routes: " +
                                 _prompt.RoutesView.DifferentRoutes.Aggregate((i, j) => i + " " + j));
                 Console.WriteLine("Shortest possible route: " + _prompt.RoutesView.Distance);
-            }
-            else
-            {
-                Console.WriteLine("NO SUCH ROUTE");
-                return;
             }
         }
 
